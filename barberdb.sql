@@ -124,3 +124,72 @@ INSERT INTO Pagos (monto, id_cita, id_metodo_pago, estado, fecha) VALUES
 (25.00, 3, 1, 'Pagado', '2024-11-17'),
 (30.00, 4, 2, 'Cancelado', '2024-11-18'),
 (20.00, 5, 1, 'Pagado', '2024-11-19');
+
+-- ---------------------------------------------
+
+-- Hacer consultas con su respectivo enunciado:
+
+-- 1. Con inner join con tres o más tablas.
+
+/* Enunciado: Obtener el nombre del cliente, el nombre del empleado 
+y el servicio asociado a cada cita, solo para las citas que están programadas o completadas.*/
+
+SELECT Clientes.nombre as "Cliente", Empleados.nombre as "Empleado", Servicios.nombre as "Servicio"
+FROM Citas
+INNER JOIN Clientes ON Citas.id_cliente = Clientes.id
+INNER JOIN Empleados ON Citas.id_empleado = Empleados.id
+INNER JOIN CitasServicios ON Citas.id = CitasServicios.id_cita
+INNER JOIN Servicios ON CitasServicios.id_servicio = Servicios.id
+WHERE Citas.estado IN ('Programada', 'Completada');
+
+
+-- 2. Con todas las cláusulas.
+
+/*Enunciado: Obtener la cantidad de citas programadas y completadas
+por cada empleado, filtrando por aquellos que tengan más de 1 cita y
+ordenando por la cantidad de citas de manera descendente.*/
+
+SELECT Empleados.nombre, COUNT(Citas.id) AS "Cantidad Citas"
+FROM Empleados
+INNER JOIN Citas ON Empleados.id = Citas.id_empleado
+WHERE Citas.estado IN ('Programada', 'Completada')
+GROUP BY Empleados.nombre
+HAVING COUNT(Citas.id) > 1
+ORDER BY "Cantidad Citas" DESC;
+
+-- 3. Agrupación y filtro de grupos con dos o más tablas.
+
+/*Enunciado: Obtener el total de pagos por servicio, 
+agrupado por servicio, para las citas que ya se han pagado.*/
+
+SELECT Servicios.nombre, SUM(Pagos.monto) AS "Total Pagos"
+FROM Pagos
+INNER JOIN Citas ON Pagos.id_cita = Citas.id
+INNER JOIN CitasServicios ON Citas.id = CitasServicios.id_cita
+INNER JOIN Servicios ON CitasServicios.id_servicio = Servicios.id
+WHERE Pagos.estado = 'Pagado'
+GROUP BY Servicios.nombre;
+
+-- 4. Diferencia con left join.
+
+/*Enunciado: Obtener la lista de clientes junto con las citas que tienen 
+asignadas, mostrando también aquellos clientes que no tienen citas.*/
+
+SELECT Clientes.nombre, Citas.fecha
+FROM Clientes
+LEFT JOIN Citas ON Clientes.id = Citas.id_cliente;
+
+-- 5. Diferencia con subconsulta.
+
+/*Enunciado: Obtener el nombre de los clientes que han 
+realizado pagos, excluyendo aquellos que no han pagado por su cita.*/
+
+SELECT nombre
+FROM Clientes
+WHERE id IN (
+	SELECT id_cliente
+	FROM Citas 
+	INNER JOIN Pagos ON Citas.id = Pagos.id_cita
+	WHERE Pagos.estado = 'Pagado'
+);
+
