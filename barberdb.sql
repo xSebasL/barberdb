@@ -70,3 +70,57 @@ CREATE TABLE Pagos (
     FOREIGN KEY (id_cita) REFERENCES Citas(id),
     FOREIGN KEY (id_metodo_pago) REFERENCES MetodoPago(id)
 );
+
+-- Inserción de registros en Ocupaciones
+INSERT INTO Ocupaciones (nombre) VALUES
+('Barbero'),
+('Recepcionista');
+
+-- Inserción de registros en Empleados
+INSERT INTO Empleados (nombre, id_ocupacion, telefono, direccion) VALUES
+('Carlos Herrera', 1, '3001234567', 'Calle 123 #45-67'),
+('José López', 1, '3012345678', 'Carrera 89 #12-34'),
+('Ana Méndez', 2, '3023456789', 'Avenida 56 #23-89');
+
+-- Inserción de registros en Clientes
+INSERT INTO Clientes (nombre, telefono, direccion) VALUES
+('Andrés Ramírez', '3101234567', 'Calle 12 #34-56'),
+('Miguel Torres', '3112345678', 'Carrera 34 #56-78'),
+('Juan García', '3123456789', 'Avenida 45 #67-89'),
+('David Peña', '3134567890', 'Calle 67 #89-12'),
+('Luis Martínez', '3145678901', 'Carrera 78 #12-45');
+
+-- Inserción de registros en Servicios
+INSERT INTO Servicios (nombre, precio) VALUES
+('Corte de Cabello', 30.00),
+('Afeitado', 20.00),
+('Arreglo de Barba', 25.00);
+
+-- Inserción de registros en Citas
+INSERT INTO Citas (id_cliente, id_empleado, fecha, estado) VALUES
+(1, 1, '2024-11-15', 'Programada'),
+(2, 2, '2024-11-16', 'Completada'),
+(3, 1, '2024-11-17', 'Cancelada'),
+(4, 2, '2024-11-18', 'Programada'),
+(5, 1, '2024-11-19', 'Completada');
+
+-- Inserción de registros en CitasServicios
+INSERT INTO CitasServicios (id_cita, id_servicio) VALUES
+(1, 1),
+(2, 2),
+(3, 3),
+(4, 1),
+(5, 2);
+
+-- Inserción de registros en MetodoPago
+INSERT INTO MetodoPago (nombre) VALUES
+('Efectivo'),
+('Tarjeta de Crédito');
+
+-- Inserción de registros en Pagos
+INSERT INTO Pagos (monto, id_cita, id_metodo_pago, estado, fecha) VALUES
+(30.00, 1, 1, 'Pagado', '2024-11-15'),
+(20.00, 2, 2, 'Pendiente', '2024-11-16'),
+(25.00, 3, 1, 'Pagado', '2024-11-17'),
+(30.00, 4, 2, 'Cancelado', '2024-11-18'),
+(20.00, 5, 1, 'Pagado', '2024-11-19');
