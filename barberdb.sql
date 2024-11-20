@@ -241,3 +241,66 @@ DELETE Citas
 FROM Citas
 LEFT JOIN Empleados ON Citas.id_empleado = Empleados.id
 WHERE Empleados.id IS NULL;
+
+-- PROCEDIMIENTOS ALMACENADOS
+
+/*Enunciado: Procedimiento almacenado que permite insertar una nueva cita
+con cliente, empleado, fecha, estado y un servicio asociado.*/
+
+CREATE PROCEDURE InsertarCitaConServicio
+    @id_cliente INT,
+    @id_empleado INT,
+    @fecha DATE,
+    @estado NVARCHAR(50),
+    @id_servicio INT
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- Insertar la cita en la tabla Citas
+        DECLARE @id_cita INT;
+        INSERT INTO Citas (id_cliente, id_empleado, fecha, estado)
+        VALUES (@id_cliente, @id_empleado, @fecha, @estado);
+
+        SET @id_cita = SCOPE_IDENTITY();
+
+        -- Insertar el servicio asociado en la tabla CitasServicios
+        INSERT INTO CitasServicios (id_cita, id_servicio)
+        VALUES (@id_cita, @id_servicio);
+
+        COMMIT TRANSACTION;
+        PRINT 'Cita y servicio agregado correctamente.';
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Error al agregar la cita y el servicio.';
+        THROW;
+    END CATCH
+END;
+
+EXEC InsertarCitaConServicio
+    @id_cliente = 1, 
+    @id_empleado = 2, 
+    @fecha = '2024-11-15', 
+    @estado = 'Programada', 
+    @id_servicio = 1;
+
+/*Enunciado: Crear un procedimiento almacenado que devuelva todas las citas según el estado.*/
+CREATE PROCEDURE ConsultarCitasPorEstado
+    @estado NVARCHAR(50)
+AS
+BEGIN
+    SELECT 
+        Citas.id AS ID_Cita,
+        Citas.fecha AS Fecha_Cita,
+        Clientes.nombre AS Nombre_Cliente,
+        Empleados.nombre AS Nombre_Empleado
+    FROM Citas
+    INNER JOIN Clientes ON Citas.id_cliente = Clientes.id
+    INNER JOIN Empleados ON Citas.id_empleado = Empleados.id
+    WHERE Citas.estado = @estado
+    ORDER BY Citas.fecha;
+END;
+
+EXEC ConsultarCitasPorEstado @estado = 'Programada';
