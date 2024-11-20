@@ -193,3 +193,51 @@ WHERE id IN (
 	WHERE Pagos.estado = 'Pagado'
 );
 
+
+-- OPERACIONES SQL DML CRUD
+
+-- C:
+-- Crear la tabla ClientesPagos
+CREATE TABLE ClientesPagos (
+    id_cliente INT PRIMARY KEY,
+    nombre NVARCHAR(100),
+    monto FLOAT
+);
+
+-- Insertar datos en ClientesPagos desde Clientes y Pagos
+INSERT INTO ClientesPagos (id_cliente, nombre, monto)
+SELECT Clientes.id, Clientes.nombre, Pagos.monto
+FROM Clientes
+INNER JOIN Citas ON Clientes.id = Citas.id_cliente
+INNER JOIN Pagos ON Citas.id = Pagos.id_cita
+WHERE Pagos.estado = 'Pagado';
+
+-- R:
+-- Obtener detalles de los pagos de citas agrupados por empleado
+SELECT Empleados.nombre AS "Empleado", COUNT(Pagos.id) AS "Total Pagos", SUM(Pagos.monto) AS "Monto Total"
+FROM Empleados
+INNER JOIN Citas ON Empleados.id = Citas.id_empleado
+INNER JOIN Pagos ON Citas.id = Pagos.id_cita
+WHERE Pagos.estado = 'Pagado'
+GROUP BY Empleados.nombre
+HAVING SUM(Pagos.monto) > 50
+ORDER BY "Monto Total" DESC
+OFFSET 0 ROWS FETCH NEXT 5 ROWS ONLY; -- Similar a LIMIT
+
+-- U:
+-- Actualizar el estado de citas a "Pendiente de pago" si el pago no se ha realizado
+UPDATE Citas
+SET estado = 'Pendiente de pago'
+WHERE id IN (
+    SELECT id_cita
+    FROM Citas
+    LEFT JOIN Pagos ON Citas.id = Pagos.id_cita
+    WHERE Pagos.id IS NULL
+);
+
+-- R:
+-- Eliminar citas de un empleado que ya no está en la tabla Empleados
+DELETE Citas
+FROM Citas
+LEFT JOIN Empleados ON Citas.id_empleado = Empleados.id
+WHERE Empleados.id IS NULL;
