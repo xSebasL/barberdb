@@ -304,3 +304,98 @@ BEGIN
 END;
 
 EXEC ConsultarCitasPorEstado @estado = 'Programada';
+
+-- Funciones
+
+/*Enunciado: Crear una función que reciba el ID de una cita y devuelva el total pagado asociado a esa cita.*/
+CREATE FUNCTION CalcularTotalPagado (@id_cita INT)
+RETURNS FLOAT
+AS
+BEGIN
+    DECLARE @total FLOAT;
+
+    SELECT 
+        @total = SUM(monto)
+    FROM 
+        Pagos
+    WHERE 
+        id_cita = @id_cita;
+
+    RETURN ISNULL(@total, 0);
+END;
+
+SELECT dbo.CalcularTotalPagado(1) AS TotalPagado;
+
+
+/*Enunciado: Crear una función que reciba el ID de una cita y devuelva el número de servicios asociados a esa cita.*/
+CREATE FUNCTION ContarServiciosPorCita (@id_cita INT)
+RETURNS INT
+AS
+BEGIN
+    DECLARE @total INT;
+
+    SELECT 
+        @total = COUNT(*)
+    FROM 
+        CitasServicios
+    WHERE 
+        id_cita = @id_cita;
+
+    RETURN @total;
+END;
+
+SELECT dbo.ContarServiciosPorCita(1) AS NumeroDeServicios;
+
+
+-- Triggers
+
+/*Enunciado: Crear un trigger que actualice el monto de un pago en la tabla
+Pagos cada vez que se inserten servicios asociados a una cita en la tabla CitasServicios.*/
+
+CREATE TRIGGER Trigger_ActualizarMontoPago
+ON CitasServicios
+AFTER INSERT
+AS
+BEGIN
+    -- Variable para almacenar el ID de la cita
+    DECLARE @id_cita INT;
+
+    -- Obtener el ID de la cita de la inserción
+    SELECT @id_cita = id_cita
+    FROM INSERTED;
+
+    -- Actualizar el monto del pago sumando el precio de los servicios asociados a la cita
+    UPDATE Pagos
+    SET monto = (
+        SELECT SUM(Servicios.precio)
+        FROM CitasServicios
+        INNER JOIN Servicios ON CitasServicios.id_servicio = Servicios.id
+        WHERE CitasServicios.id_cita = @id_cita
+    )
+    WHERE id_cita = @id_cita;
+END;
+
+/*Enunciado: Crear un trigger que bloquee la inserción de una cita si el cliente tiene una cita pendiente de pago.*/
+
+CREATE TRIGGER Trigger_VerificarPagosPendientes
+ON Citas
+INSTEAD OF INSERT
+AS
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM Citas
+        INNER JOIN Pagos ON Citas.id = Pagos.id_cita
+        WHERE Citas.id_cliente = (SELECT id_cliente FROM INSERTED)
+          AND Pagos.estado = 'Pendiente'
+    )
+    BEGIN
+        RAISERROR ('El cliente tiene una cita con pagos pendientes. No puede agendar una nueva cita.', 16, 1);
+    END
+    ELSE
+    BEGIN
+        INSERT INTO Citas (id_cliente, id_empleado, fecha, estado)
+        SELECT id_cliente, id_empleado, fecha, estado
+        FROM INSERTED;
+    END
+END;
